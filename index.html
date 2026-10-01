@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yokogawa UT320 Public Dashboard</title>
+  <style>
+    body { font-family: sans-serif; background: #0f172a; color: #fff; text-align: center; padding: 20px; }
+    .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
+    .card { background: #1e293b; padding: 25px; border-radius: 12px; width: 250px; }
+    .val { font-size: 2.8rem; font-weight: bold; margin: 15px 0; color: #38bdf8; }
+    .sp { color: #facc15; }
+    input, button { padding: 8px 12px; font-size: 1rem; border-radius: 6px; border: none; }
+    button { background: #22c55e; color: white; cursor: pointer; font-weight: bold; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+  <h2>Monitoring Yokogawa UT320</h2>
+  <div class="container">
+    <div class="card">
+      <h3>Suhu Saat Ini (PV)</h3>
+      <div class="val" id="pv">-- °C</div>
+    </div>
+    <div class="card">
+      <h3>Target Suhu (SP)</h3>
+      <div class="val sp" id="sp">-- °C</div>
+      <br>
+      <input type="number" id="inputSP" step="0.1" placeholder="Isi SP baru">
+      <button onclick="kirimSP()">Ubah SP</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "PASTE_API_KEY_ANDA_DI_SINI",
+      databaseURL: "https://tes-hosting-sensor-suhu-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Terima data real-time dari Firebase
+    db.ref('/UT320/PV').on('value', (s) => { document.getElementById('pv').innerText = (s.val() || 0).toFixed(1) + " °C"; });
+    db.ref('/UT320/SP').on('value', (s) => { document.getElementById('sp').innerText = (s.val() || 0).toFixed(1) + " °C"; });
+
+    // Kirim SP Baru ke Firebase
+    function kirimSP() {
+      const val = parseFloat(document.getElementById('inputSP').value);
+      if (!isNaN(val)) {
+        db.ref('/UT320/NewSP').set(val);
+        alert("Perintah dikirim!");
+        document.getElementById('inputSP').value = "";
+      }
+    }
+  </script>
+</body>
+</html>
