@@ -3,35 +3,283 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yokogawa UT320 Public Dashboard</title>
+  <title>Yokogawa UT320 - Industrial Control Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; background: #0f172a; color: #fff; text-align: center; padding: 20px; }
-    .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
-    .card { background: #1e293b; padding: 25px; border-radius: 12px; width: 250px; }
-    .val { font-size: 2.8rem; font-weight: bold; margin: 15px 0; color: #38bdf8; }
-    .sp { color: #facc15; }
-    input, button { padding: 8px 12px; font-size: 1rem; border-radius: 6px; border: none; }
-    button { background: #22c55e; color: white; cursor: pointer; font-weight: bold; }
+    :root {
+      --bg-dark: #0a0e17;
+      --panel-bg: rgba(22, 30, 46, 0.85);
+      --border-color: #1e293b;
+      --accent-pv: #00f2fe;
+      --accent-sp: #ffb703;
+      --accent-btn: #00e676;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(0, 242, 254, 0.08) 0%, transparent 50%),
+        linear-gradient(180deg, #0a0e17 0%, #05070a 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 15px;
+    }
+
+    /* Header Panel */
+    header {
+      text-align: center;
+      margin-bottom: 35px;
+      position: relative;
+    }
+
+    .brand-title {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .brand-title span {
+      color: var(--accent-pv);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-color);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Grid Container */
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 25px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    /* Card Styling */
+    .card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .card-pv::before { background: linear-gradient(90deg, transparent, var(--accent-pv), transparent); }
+    .card-sp::before { background: linear-gradient(90deg, transparent, var(--accent-sp), transparent); }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .unit-tag {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    /* Display Values */
+    .val-display {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin: 10px 0 20px 0;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    #pv {
+      color: var(--accent-pv);
+      text-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+    }
+
+    #sp {
+      color: var(--accent-sp);
+      text-shadow: 0 0 20px rgba(255, 183, 3, 0.2);
+    }
+
+    /* Control Inputs */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: rgba(10, 14, 23, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.2rem;
+      padding: 12px;
+      border-radius: 8px;
+      outline: none;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--accent-sp);
+      box-shadow: 0 0 12px rgba(255, 183, 3, 0.25);
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #00e676 0%, #00b0ff 100%);
+      border: none;
+      color: #05070a;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 230, 118, 0.35);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Footer Meta */
+    footer {
+      margin-top: auto;
+      padding-top: 40px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-  <h2>Monitoring Yokogawa UT320</h2>
-  <div class="container">
-    <div class="card">
-      <h3>Suhu Saat Ini (PV)</h3>
-      <div class="val" id="pv">-- °C</div>
+  <header>
+    <div class="brand-title">
+      Yokogawa <span>UT320</span>
     </div>
-    <div class="card">
-      <h3>Target Suhu (SP)</h3>
-      <div class="val sp" id="sp">-- °C</div>
-      <br>
-      <input type="number" id="inputSP" step="0.1" placeholder="Isi SP baru">
-      <button onclick="kirimSP()">Ubah SP</button>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>SYSTEM ONLINE (RS-485 MODBUS)</span>
     </div>
-  </div>
+  </header>
+
+  <main class="container">
+    <!-- PV Card -->
+    <div class="card card-pv">
+      <div class="card-header">
+        <span class="card-title">Process Value (PV)</span>
+        <span class="unit-tag">°C</span>
+      </div>
+      <div class="val-display" id="pv">--.-</div>
+      <p style="font-size: 0.75rem; color: var(--text-muted);">Suhu Aktual Controller</p>
+    </div>
+
+    <!-- SP Card -->
+    <div class="card card-sp">
+      <div class="card-header">
+        <span class="card-title">Set Point (SP)</span>
+        <span class="unit-tag">°C</span>
+      </div>
+      <div class="val-display" id="sp">--.-</div>
+
+      <div class="control-group">
+        <div class="input-wrapper">
+          <input type="number" id="inputSP" step="0.1" placeholder="Masukkan SP Baru">
+        </div>
+        <button onclick="kirimSP()">Ubah Target SP</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Remote Thermal Monitoring System &bull; Custom Cloud Stack
+  </footer>
 
   <script>
     const firebaseConfig = {
@@ -43,16 +291,27 @@
     const db = firebase.database();
 
     // Terima data real-time dari Firebase
-    db.ref('/UT320/PV').on('value', (s) => { document.getElementById('pv').innerText = (s.val() || 0).toFixed(1) + " °C"; });
-    db.ref('/UT320/SP').on('value', (s) => { document.getElementById('sp').innerText = (s.val() || 0).toFixed(1) + " °C"; });
+    db.ref('/UT320/PV').on('value', (s) => { 
+      const val = s.val();
+      document.getElementById('pv').innerText = val !== null ? parseFloat(val).toFixed(1) : "--.-"; 
+    });
+
+    db.ref('/UT320/SP').on('value', (s) => { 
+      const val = s.val();
+      document.getElementById('sp').innerText = val !== null ? parseFloat(val).toFixed(1) : "--.-"; 
+    });
 
     // Kirim SP Baru ke Firebase
     function kirimSP() {
-      const val = parseFloat(document.getElementById('inputSP').value);
+      const input = document.getElementById('inputSP');
+      const val = parseFloat(input.value);
+
       if (!isNaN(val)) {
         db.ref('/UT320/NewSP').set(val);
-        alert("Perintah dikirim!");
-        document.getElementById('inputSP').value = "";
+        alert("Perintah perubahan SP (" + val + " °C) berhasil dikirim!");
+        input.value = "";
+      } else {
+        alert("Harap masukkan angka SP yang valid!");
       }
     }
   </script>
